@@ -28,9 +28,9 @@ M.value=Objective(rule=value_rule,sense=minimize)
 
 def demand_rule(model,i,k):
     
-    if model.Dem[i,k]<0 and i!=11 and i!=13:
+    if model.Dem[i,k]<0 and i!=11 and i!=13: #not facility and demand node
         return sum(model.X[k,j,i] - model.X[k,i,j]  for j in model.l) == -model.Dem[i,k]
-    elif model.Dem[i,k]>0 and i!=11 and i!=13: #suppl node check et
+    elif model.Dem[i,k]>0 and i!=11 and i!=13: #not fc and supply node
         return sum(model.X[k,i,j] for j in model.l) <= model.Dem[i,k]
     elif i==11 or i==13:
         return sum(0.85*model.X[k,j,i]-model.X[k,i,j] for j in model.l) == 0
