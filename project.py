@@ -1,7 +1,7 @@
 import pyomo
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
-
+import pandas as pd
 
 
 
@@ -15,7 +15,7 @@ M.l=Set()
 
 #Params
 M.Cos=Param(M.l,M.l)
-M.Dem=Param(M.l,M.c)
+M.Sup=Param(M.l,M.c)
 M.Cap=Param(M.l)
 
 #Dec Var
@@ -28,10 +28,10 @@ M.value=Objective(rule=value_rule,sense=minimize)
 
 def demand_rule(model,i,k):
     
-    if model.Dem[i,k]<0 and i!=11 and i!=13: #not facility and demand node
-        return sum(model.X[k,j,i] - model.X[k,i,j]  for j in model.l) == -model.Dem[i,k]
-    elif model.Dem[i,k]>0 and i!=11 and i!=13: #not fc and supply node
-        return sum(model.X[k,i,j] for j in model.l) <= model.Dem[i,k]
+    if model.Sup[i,k]<0 and i!=11 and i!=13: #not facility and demand node
+        return sum(model.X[k,j,i] - model.X[k,i,j]  for j in model.l) == -model.Sup[i,k]
+    elif model.Sup[i,k]>0 and i!=11 and i!=13: #not fc and supply node
+        return sum(model.X[k,i,j] for j in model.l) <= model.Sup[i,k]
     elif i==11 or i==13:
         return sum(0.85*model.X[k,j,i]-model.X[k,i,j] for j in model.l) == 0
     else:
@@ -47,7 +47,7 @@ data.load(filename="pythondata.xlsx", range="ltable", format='set', set='l')
 #read commodities
 data.load(filename="pythondata.xlsx", range="ctable", format='set', set='c')
 #read demands
-data.load(filename="pythondata.xlsx", range="Demtable", param='Dem',format="array")
+data.load(filename="pythondata.xlsx", range="Suptable", param='Sup',format="array")
 #read capasities
 data.load(filename="pythondata.xlsx", range="Captable",index='l', param='Cap')
 #read costs
@@ -56,7 +56,23 @@ instance = M.create_instance(data)
 
 optimizer=SolverFactory("glpk")
 optimizer.solve(instance)
-instance.display()
+
+var_val=[]
+for v in instance.component_data_objects(Var):
+    var_val.append(v.value)
+nextValue=0;
+thisdict={}
+for k,i,j in instance.c*instance.l*instance.l:
+    #print(k,i,j ," ",var_val[nextValue])
+    index=str(k)+","+str(j)+","+str(i)
+    thisdict.update({index: var_val[nextValue]})
+    nextValue+=1;
+
+df = pd.DataFrame(data=thisdict, index=[0])
+
+df = (df.T)
+
+df.to_excel('results.xlsx')
 
 
 
