@@ -34,8 +34,8 @@ def demand_rule(model,i,k):
         return sum(model.X[k,i,j] for j in model.l) <= model.Sup[i,k]
     elif i==11 or i==13:
         return sum(0.85*model.X[k,j,i]-model.X[k,i,j] for j in model.l) == 0
-    else:
-        return sum(model.X[k,j,i]-model.X[k,i,j] for j in model.l) ==0
+    
+    return sum(model.X[k,j,i]-model.X[k,i,j] for j in model.l) ==0
 def cap_rule(model,i):
     return sum(model.X[k,j,i] for k,j in model.c*model.l) <= model.Cap[i]
 
